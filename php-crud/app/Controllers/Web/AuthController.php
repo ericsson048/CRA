@@ -38,8 +38,15 @@ final class AuthController extends Controller
                         'name' => (string)$user['nom'],
                         'email' => (string)$user['email'],
                         'role' => (string)$user['role'],
+                        'team_id' => isset($user['team_id']) ? (int)$user['team_id'] : null,
+                        'team_name' => isset($user['team_name']) ? (string)$user['team_name'] : null,
                     ]);
-                    $this->redirect(((string)$user['role'] === 'developpeur') ? 'planning.php' : 'index.php');
+
+                    $role = (string)$user['role'];
+                    if (in_array($role, ['developpeur', 'team_leader', 'team_leader_adjoint'], true)) {
+                        $this->redirect('planning.php');
+                    }
+                    $this->redirect('index.php');
                 }
             }
         }

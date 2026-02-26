@@ -5,7 +5,7 @@ $activeNav = $activeNav ?? 'dashboard';
 $pageSubtitle = $pageSubtitle ?? '';
 $topActions = $topActions ?? '';
 $sessionUser = $sessionUser ?? null;
-$canPlan = in_array((string)($sessionUser['role'] ?? ''), ['admin', 'gestionnaire', 'developpeur'], true);
+$canPlan = in_array((string)($sessionUser['role'] ?? ''), ['admin', 'gestionnaire', 'team_leader', 'team_leader_adjoint', 'developpeur'], true);
 $canManage = in_array((string)($sessionUser['role'] ?? ''), ['admin', 'gestionnaire'], true);
 ?>
 <!doctype html>
@@ -27,6 +27,8 @@ $canManage = in_array((string)($sessionUser['role'] ?? ''), ['admin', 'gestionna
             <?php if ($canManage): ?>
                 <a class="<?= navLinkClass('create', $activeNav); ?>" href="create.php"><span class="dot rm"></span>Ajouter</a>
                 <a class="<?= navLinkClass('users', $activeNav); ?>" href="register.php"><span class="dot rh"></span>Utilisateurs</a>
+                <a class="<?= navLinkClass('teams', $activeNav); ?>" href="teams.php"><span class="dot rh"></span>Teams</a>
+                <a class="<?= navLinkClass('projects', $activeNav); ?>" href="projects.php"><span class="dot rm"></span>Projets</a>
             <?php endif; ?>
             <?php if ($canPlan): ?>
                 <a class="<?= navLinkClass('planning', $activeNav); ?>" href="planning.php"><span class="dot rh"></span>Planning</a>
@@ -44,6 +46,9 @@ $canManage = in_array((string)($sessionUser['role'] ?? ''), ['admin', 'gestionna
             <?php if ($sessionUser): ?>
                 <p class="user-name"><?= h((string)($sessionUser['name'] ?? 'Utilisateur')); ?></p>
                 <p class="user-role">Role: <?= h((string)($sessionUser['role'] ?? '')); ?></p>
+                <?php if (!empty($sessionUser['team_name'])): ?>
+                    <p class="user-role">Team: <?= h((string)$sessionUser['team_name']); ?></p>
+                <?php endif; ?>
             <?php else: ?>
                 <p class="user-name">Visiteur</p>
                 <p class="user-role">Connectez-vous pour continuer</p>

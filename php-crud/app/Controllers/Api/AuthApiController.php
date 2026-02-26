@@ -30,6 +30,8 @@ final class AuthApiController extends Controller
             'name' => (string)$user['nom'],
             'email' => (string)$user['email'],
             'role' => (string)$user['role'],
+            'team_id' => isset($user['team_id']) ? (int)$user['team_id'] : null,
+            'team_name' => isset($user['team_name']) ? (string)$user['team_name'] : null,
         ]);
 
         $this->json([

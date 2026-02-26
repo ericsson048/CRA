@@ -22,6 +22,12 @@ if (!function_exists('roleLabel')) {
         if ($role === 'gestionnaire') {
             return 'Resource manager';
         }
+        if ($role === 'team_leader') {
+            return 'Team Leader';
+        }
+        if ($role === 'team_leader_adjoint') {
+            return 'Team Leader Adjoint';
+        }
         return 'Developpeur';
     }
 }
@@ -34,6 +40,12 @@ if (!function_exists('roleBadgeClass')) {
         }
         if ($role === 'gestionnaire') {
             return 'badge badge-warn';
+        }
+        if ($role === 'team_leader') {
+            return 'badge badge-neutral';
+        }
+        if ($role === 'team_leader_adjoint') {
+            return 'badge badge-neutral';
         }
         return 'badge badge-ok';
     }

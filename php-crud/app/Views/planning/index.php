@@ -27,7 +27,7 @@ if (!function_exists('priorityClass')) {
 
 $pageTitle = 'Planning des taches';
 $activeNav = 'planning';
-$pageSubtitle = 'Module RH: affectation et suivi des taches';
+$pageSubtitle = 'Workflow entreprise: projet -> TL/TLA -> taches developpeurs';
 $topActions = '<a class="btn btn-ghost" href="index.php">Voir ressources</a>';
 require __DIR__ . '/../layout/app_start.php';
 ?>
@@ -55,6 +55,15 @@ require __DIR__ . '/../layout/app_start.php';
                 <div class="form-group full">
                     <label for="description">Description</label>
                     <textarea id="description" name="description" placeholder="Objectif, contexte, livrable"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="project_id">Projet</label>
+                    <select id="project_id" name="project_id" required>
+                        <option value="">Selectionner</option>
+                        <?php foreach ($projects as $project): ?>
+                            <option value="<?= (int)$project['id']; ?>"><?= h((string)$project['nom']); ?></option>
+                        <?php endforeach; ?>
+                    </select>
                 </div>
                 <div class="form-group">
                     <label for="assigned_user_id">Developpeur assigne</label>
@@ -100,6 +109,7 @@ require __DIR__ . '/../layout/app_start.php';
             <tr>
                 <th>Tache</th>
                 <th>Assigne a</th>
+                <th>Projet</th>
                 <th>Ressource liee</th>
                 <th>Priorite</th>
                 <th>Statut</th>
@@ -109,16 +119,23 @@ require __DIR__ . '/../layout/app_start.php';
         </thead>
         <tbody>
         <?php if (empty($tasks)): ?>
-            <tr><td colspan="7" class="hint">Aucune tache de planning.</td></tr>
+            <tr><td colspan="8" class="hint">Aucune tache de planning.</td></tr>
         <?php else: ?>
             <?php foreach ($tasks as $task): ?>
                 <?php
-                    $canUpdateThisTask = $canUpdateAnyTask || ($canUpdateOwnTask && (int)$task['assigned_user_id'] === (int)($sessionUser['id'] ?? 0));
+                    $canUpdateThisTask = $canUpdateAnyTask
+                        || ($canUpdateOwnTask && (int)$task['assigned_user_id'] === (int)($sessionUser['id'] ?? 0))
+                        || $canUpdateLeadScope;
                     $dueDate = $task['due_date'] ? date('d/m/Y', strtotime((string)$task['due_date'])) : '-';
                 ?>
                 <tr>
-                    <td><strong><?= h((string)$task['titre']); ?></strong><br><span class="hint"><?= h((string)($task['description'] ?? '')); ?></span></td>
+                    <td>
+                        <strong><?= h((string)$task['titre']); ?></strong>
+                        <br>
+                        <span class="hint"><?= h((string)($task['description'] ?? '')); ?></span>
+                    </td>
                     <td><?= h((string)$task['assigned_name']); ?></td>
+                    <td><?= h((string)($task['project_name'] ?? '-')); ?></td>
                     <td><?= h((string)($task['resource_name'] ?? '-')); ?></td>
                     <td><span class="<?= priorityClass((string)$task['priorite']); ?>"><?= h((string)$task['priorite']); ?></span></td>
                     <td><span class="<?= taskStatusClass((string)$task['statut']); ?>"><?= h((string)$task['statut']); ?></span></td>

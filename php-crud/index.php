@@ -5,7 +5,9 @@ require_once __DIR__ . '/app/bootstrap.php';
 
 use App\Controllers\Web\AuthController;
 use App\Controllers\Web\PlanningController;
+use App\Controllers\Web\ProjectController;
 use App\Controllers\Web\ResourceController;
+use App\Controllers\Web\TeamController;
 use App\Controllers\Web\UserController;
 use App\Core\Auth;
 use App\Core\Database;
@@ -40,6 +42,12 @@ $router->add(['GET', 'POST'], 'planning', static function (): void {
 });
 $router->add(['GET', 'POST'], 'users', static function (): void {
     (new UserController())->index();
+});
+$router->add(['GET', 'POST'], 'teams', static function (): void {
+    (new TeamController())->index();
+});
+$router->add(['GET', 'POST'], 'projects', static function (): void {
+    (new ProjectController())->index();
 });
 $router->add(['GET', 'POST'], 'login', static function (): void {
     (new AuthController())->login();

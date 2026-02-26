@@ -6,6 +6,7 @@ namespace App\Controllers\Web;
 use App\Core\Auth;
 use App\Core\Controller;
 use App\Core\Database;
+use App\Models\TeamModel;
 use App\Models\UserModel;
 
 final class UserController extends Controller
@@ -22,10 +23,11 @@ final class UserController extends Controller
         }
 
         $userModel = new UserModel(Database::connection());
+        $teamModel = new TeamModel(Database::connection());
         $creator = Auth::user();
         $creatorRole = (string)($creator['role'] ?? '');
 
-        $allowedRoles = ['developpeur'];
+        $allowedRoles = ['team_leader', 'team_leader_adjoint', 'developpeur'];
         if ($creatorRole === 'admin') {
             $allowedRoles[] = 'gestionnaire';
         }
@@ -33,13 +35,16 @@ final class UserController extends Controller
         $errors = [];
         $nom = '';
         $email = '';
-        $role = 'developpeur';
+        $role = 'team_leader';
+        $teamId = '';
 
         if ($this->requestMethod() === 'POST') {
             $nom = trim((string)($_POST['nom'] ?? ''));
             $email = trim((string)($_POST['email'] ?? ''));
             $password = (string)($_POST['password'] ?? '');
             $role = trim((string)($_POST['role'] ?? 'developpeur'));
+            $teamId = trim((string)($_POST['team_id'] ?? ''));
+            $normalizedTeamId = $teamId !== '' ? (int)$teamId : null;
 
             if ($nom === '') {
                 $errors[] = 'Le nom est obligatoire.';
@@ -56,6 +61,11 @@ final class UserController extends Controller
             if (!$userModel->canCreateRole($creatorRole, $role)) {
                 $errors[] = 'Tu ne peux pas creer ce role.';
             }
+            if (in_array($role, ['team_leader', 'team_leader_adjoint', 'developpeur'], true)) {
+                if ($normalizedTeamId === null || $teamModel->findById($normalizedTeamId) === null) {
+                    $errors[] = 'Une team valide est obligatoire pour ce role.';
+                }
+            }
 
             if (empty($errors)) {
                 if ($userModel->findByEmail($email) !== null) {
@@ -66,6 +76,7 @@ final class UserController extends Controller
                         'email' => $email,
                         'password_hash' => password_hash($password, PASSWORD_DEFAULT),
                         'role' => $role,
+                        'team_id' => $normalizedTeamId,
                     ]);
                     $this->redirect('register.php?created=1');
                 }
@@ -78,8 +89,10 @@ final class UserController extends Controller
             'nom' => $nom,
             'email' => $email,
             'role' => $role,
+            'teamId' => $teamId,
             'allowedRoles' => $allowedRoles,
             'users' => $userModel->all(),
+            'teams' => $teamModel->selectList(),
             'sessionUser' => Auth::user(),
         ]);
     }
