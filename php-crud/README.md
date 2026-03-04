@@ -31,6 +31,12 @@ Secrets a ne jamais versionner:
 Logs:
 - fichier applicatif: `storage/logs/app.log`
 - audit metier: table `audit_logs`
+- notifications internes: table `notifications`
+
+Email:
+- config via `EMAIL_HOST`, `EMAIL_PORT`, `EMAIL_HOST_USER`, `EMAIL_HOST_PASSWORD`, `EMAIL_USE_TLS`, `EMAIL_IMPLICIT_TLS`, `DEFAULT_FROM_EMAIL`
+- compatibilite SMTP authentifiee
+- pour Gmail: utiliser un mot de passe d application uniquement dans `.env`
 
 ## Modules web
 - Authentification
@@ -38,6 +44,8 @@ Logs:
 - Planning des taches
 - Gestion utilisateurs (creation par admin/gestionnaire)
 - Gestion du compte et changement de mot de passe
+- Centre de notifications
+- Notifications email SMTP
 - Export CSV/PDF
 
 ## API REST
@@ -88,6 +96,8 @@ Regle:
 - limitation basique des tentatives de connexion
 - journalisation applicative
 - audit trail des actions sensibles
+- notifications internes par utilisateur
+- envoi email sur les evenements metier principaux
 
 ## Relations SQL
 - `users.team_id` -> `teams.id`
@@ -102,6 +112,7 @@ Regle:
 - `planning_tasks.project_id` -> `projects.id`
 - `planning_tasks.resource_id` -> `resources.id`
 - `audit_logs.user_id` -> `users.id`
+- `notifications.user_id` -> `users.id`
 
 ## Comptes demo
 Disponibles uniquement si `APP_SEED_DEMO_DATA=true`.
@@ -114,5 +125,6 @@ Disponibles uniquement si `APP_SEED_DEMO_DATA=true`.
 ## URLs utiles
 - Web login: `http://localhost/php-crud/login.php`
 - Mon compte: `http://localhost/php-crud/account.php`
+- Notifications: `http://localhost/php-crud/notifications.php`
 - Dashboard: `http://localhost/php-crud/`
 - API me: `http://localhost/php-crud/api.php/auth/me`

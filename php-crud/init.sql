@@ -94,6 +94,18 @@ CREATE TABLE IF NOT EXISTS login_attempts (
     INDEX idx_login_identifier (identifier, ip_address, attempted_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE IF NOT EXISTS notifications (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    title VARCHAR(190) NOT NULL,
+    message TEXT NOT NULL,
+    action_url VARCHAR(255) NULL,
+    is_read TINYINT(1) NOT NULL DEFAULT 0,
+    read_at DATETIME NULL,
+    created_at DATETIME NOT NULL,
+    INDEX idx_notifications_user_id (user_id, is_read, created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 ALTER TABLE teams
     ADD CONSTRAINT fk_teams_tl_user FOREIGN KEY (tl_user_id) REFERENCES users(id) ON DELETE SET NULL,
     ADD CONSTRAINT fk_teams_tla_user FOREIGN KEY (tla_user_id) REFERENCES users(id) ON DELETE SET NULL;
@@ -115,3 +127,6 @@ ALTER TABLE planning_tasks
 
 ALTER TABLE audit_logs
     ADD CONSTRAINT fk_audit_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL;
+
+ALTER TABLE notifications
+    ADD CONSTRAINT fk_notifications_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE;
