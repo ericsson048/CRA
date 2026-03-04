@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace App\Controllers\Web;
 
+use App\Core\Audit;
 use App\Core\Auth;
 use App\Core\Controller;
 use App\Core\Database;
@@ -76,11 +77,13 @@ final class ResourceController extends Controller
         ];
 
         if ($this->requestMethod() === 'POST') {
+            $this->validateCsrf();
             $normalized = $this->normalizeResourceInput($_POST);
             $data = $normalized['data'];
             $errors = $normalized['errors'];
             if (empty($errors)) {
-                $resourceModel->create($data);
+                $resourceId = $resourceModel->create($data);
+                Audit::log('resource_created', 'resource', $resourceId, ['nom' => $data['nom']]);
                 $this->redirect('index.php?created=1');
             }
         }
@@ -121,11 +124,13 @@ final class ResourceController extends Controller
         ];
 
         if ($this->requestMethod() === 'POST') {
+            $this->validateCsrf();
             $normalized = $this->normalizeResourceInput($_POST);
             $data = $normalized['data'];
             $errors = $normalized['errors'];
             if (empty($errors)) {
                 $resourceModel->update($id, $data);
+                Audit::log('resource_updated', 'resource', $id, ['nom' => $data['nom']]);
                 $this->redirect('index.php?updated=1');
             }
         }
@@ -158,7 +163,9 @@ final class ResourceController extends Controller
         }
 
         if ($this->requestMethod() === 'POST' && (string)($_POST['action'] ?? '') === 'delete') {
+            $this->validateCsrf();
             $resourceModel->delete($id);
+            Audit::log('resource_deleted', 'resource', $id, ['nom' => (string)$resource['nom']]);
             $this->redirect('index.php?deleted=1');
         }
 

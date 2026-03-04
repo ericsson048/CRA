@@ -7,6 +7,9 @@ require __DIR__ . '/../layout/app_start.php';
 ?>
 
 <?php if ($created): ?><div class="alert alert-success">Utilisateur cree avec succes.</div><?php endif; ?>
+<?php if ($activated): ?><div class="alert alert-success">Compte active.</div><?php endif; ?>
+<?php if ($deactivated): ?><div class="alert alert-success">Compte desactive.</div><?php endif; ?>
+<?php if ($passwordReset): ?><div class="alert alert-success">Mot de passe reinitialise. L utilisateur devra le changer a la prochaine connexion.</div><?php endif; ?>
 <?php foreach ($errors as $error): ?><div class="alert alert-error"><?= h($error); ?></div><?php endforeach; ?>
 
 <div class="card">
@@ -14,6 +17,8 @@ require __DIR__ . '/../layout/app_start.php';
     <p class="hint">Les developpeurs sont rattaches a une team. Le gestionnaire assigne ensuite les projets aux TL/TLA.</p>
 
     <form method="post" action="register.php">
+        <?= csrf_field(); ?>
+        <input type="hidden" name="action" value="create_user">
         <div class="form-grid">
             <div class="form-group">
                 <label for="nom">Nom complet</label>
@@ -42,7 +47,7 @@ require __DIR__ . '/../layout/app_start.php';
             </div>
             <div class="form-group">
                 <label for="password">Mot de passe initial</label>
-                <input id="password" type="password" name="password" minlength="8" required>
+                <input id="password" type="password" name="password" minlength="12" required>
             </div>
         </div>
         <div class="toolbar" style="margin-top: 12px;">
@@ -59,13 +64,16 @@ require __DIR__ . '/../layout/app_start.php';
                 <th>Nom</th>
                 <th>Email</th>
                 <th>Role</th>
+                <th>Etat</th>
                 <th>Team</th>
+                <th>Derniere connexion</th>
                 <th>Date creation</th>
+                <th>Actions</th>
             </tr>
         </thead>
         <tbody>
         <?php if (empty($users)): ?>
-            <tr><td colspan="6" class="hint">Aucun utilisateur.</td></tr>
+            <tr><td colspan="9" class="hint">Aucun utilisateur.</td></tr>
         <?php else: ?>
             <?php foreach ($users as $item): ?>
                 <tr>
@@ -73,8 +81,28 @@ require __DIR__ . '/../layout/app_start.php';
                     <td><?= h((string)$item['nom']); ?></td>
                     <td><?= h((string)$item['email']); ?></td>
                     <td><span class="<?= roleBadgeClass((string)$item['role']); ?>"><?= h(roleLabel((string)$item['role'])); ?></span></td>
+                    <td><span class="<?= activeBadgeClass((bool)$item['is_active']); ?>"><?= (bool)$item['is_active'] ? 'Actif' : 'Inactif'; ?></span></td>
                     <td><?= h((string)($item['team_name'] ?? '-')); ?></td>
+                    <td><?= h((string)($item['last_login_at'] ?? '-')); ?></td>
                     <td><?= h((string)$item['created_at']); ?></td>
+                    <td>
+                        <div class="toolbar">
+                            <form method="post" action="register.php" class="inline">
+                                <?= csrf_field(); ?>
+                                <input type="hidden" name="action" value="toggle_active">
+                                <input type="hidden" name="user_id" value="<?= (int)$item['id']; ?>">
+                                <input type="hidden" name="enable" value="<?= (bool)$item['is_active'] ? '0' : '1'; ?>">
+                                <button type="submit" class="btn btn-ghost"><?= (bool)$item['is_active'] ? 'Desactiver' : 'Activer'; ?></button>
+                            </form>
+                            <form method="post" action="register.php" class="inline">
+                                <?= csrf_field(); ?>
+                                <input type="hidden" name="action" value="reset_password">
+                                <input type="hidden" name="user_id" value="<?= (int)$item['id']; ?>">
+                                <input type="password" name="reset_password" minlength="12" placeholder="Mot de passe temporaire" required>
+                                <button type="submit" class="btn btn-primary">Reset MDP</button>
+                            </form>
+                        </div>
+                    </td>
                 </tr>
             <?php endforeach; ?>
         <?php endif; ?>

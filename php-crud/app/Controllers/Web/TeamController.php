@@ -3,9 +3,12 @@ declare(strict_types=1);
 
 namespace App\Controllers\Web;
 
+use App\Core\AppConfig;
+use App\Core\Audit;
 use App\Core\Auth;
 use App\Core\Controller;
 use App\Core\Database;
+use App\Core\NotificationService;
 use App\Models\TeamModel;
 use App\Models\UserModel;
 
@@ -32,8 +35,10 @@ final class TeamController extends Controller
         $teamDescription = '';
         $tlUserId = '';
         $tlaUserId = '';
+        $notificationService = new NotificationService();
 
         if ($this->requestMethod() === 'POST') {
+            $this->validateCsrf();
             $action = trim((string)($_POST['action'] ?? ''));
 
             if ($action === 'create_team') {
@@ -81,6 +86,15 @@ final class TeamController extends Controller
                     if ($tlaId !== null) {
                         $userModel->setTeam($tlaId, $teamId);
                     }
+                    Audit::log('team_created', 'team', $teamId, ['nom' => $teamNom]);
+                    $notificationService->notifyMany(
+                        array_filter([(int)$tlId, (int)$tlaId]),
+                        'Nouvelle team',
+                        'Tu as ete rattache a la team ' . $teamNom . '.',
+                        'teams.php',
+                        'Affectation a une team',
+                        '<p>Bonjour,</p><p>Tu as ete rattache a la team <strong>' . $this->escapeHtml($teamNom) . '</strong>.</p><p>Acces: <a href="' . $this->escapeHtml(AppConfig::appUrl() . '/teams.php') . '">' . $this->escapeHtml(AppConfig::appUrl() . '/teams.php') . '</a></p>'
+                    );
                     $this->redirect('teams.php?created=1');
                 }
             } elseif ($action === 'assign_member') {
@@ -115,6 +129,15 @@ final class TeamController extends Controller
                             'tla_user_id' => $userId,
                         ]);
                     }
+                    Audit::log('team_member_assigned', 'team', $teamId, ['user_id' => $userId]);
+                    $notificationService->notifyUser(
+                        $userId,
+                        'Affectation team',
+                        'Tu as ete affecte a la team ' . (string)$team['nom'] . '.',
+                        'teams.php',
+                        'Nouvelle affectation team',
+                        '<p>Bonjour ' . $this->escapeHtml((string)$user['nom']) . ',</p><p>Tu as ete affecte a la team <strong>' . $this->escapeHtml((string)$team['nom']) . '</strong>.</p><p>Acces: <a href="' . $this->escapeHtml(AppConfig::appUrl() . '/teams.php') . '">' . $this->escapeHtml(AppConfig::appUrl() . '/teams.php') . '</a></p>'
+                    );
                     $this->redirect('teams.php?assigned=1');
                 }
             }
@@ -123,7 +146,7 @@ final class TeamController extends Controller
         $allUsers = $userModel->all();
         $assignableUsers = [];
         foreach ($allUsers as $user) {
-            if (in_array((string)$user['role'], ['team_leader', 'team_leader_adjoint', 'developpeur'], true)) {
+            if ((bool)($user['is_active'] ?? false) && in_array((string)$user['role'], ['team_leader', 'team_leader_adjoint', 'developpeur'], true)) {
                 $assignableUsers[] = $user;
             }
         }

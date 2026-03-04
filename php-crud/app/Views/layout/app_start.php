@@ -5,6 +5,7 @@ $activeNav = $activeNav ?? 'dashboard';
 $pageSubtitle = $pageSubtitle ?? '';
 $topActions = $topActions ?? '';
 $sessionUser = $sessionUser ?? null;
+$notificationUnreadCount = isset($notificationUnreadCount) ? (int)$notificationUnreadCount : 0;
 $canPlan = in_array((string)($sessionUser['role'] ?? ''), ['admin', 'gestionnaire', 'team_leader', 'team_leader_adjoint', 'developpeur'], true);
 $canManage = in_array((string)($sessionUser['role'] ?? ''), ['admin', 'gestionnaire'], true);
 ?>
@@ -37,7 +38,12 @@ $canManage = in_array((string)($sessionUser['role'] ?? ''), ['admin', 'gestionna
         <div class="nav-group">
             <div class="nav-label">Compte</div>
             <?php if ($sessionUser): ?>
-                <a class="<?= navLinkClass('logout', $activeNav); ?>" href="logout.php"><span class="dot"></span>Deconnexion</a>
+                <a class="<?= navLinkClass('notifications', $activeNav); ?>" href="notifications.php"><span class="dot"></span>Notifications<?= notificationBadge($notificationUnreadCount); ?></a>
+                <a class="<?= navLinkClass('account', $activeNav); ?>" href="account.php"><span class="dot"></span>Mon compte</a>
+                <form method="post" action="logout.php" class="nav-form">
+                    <?= csrf_field(); ?>
+                    <button class="<?= navLinkClass('logout', $activeNav); ?>" type="submit"><span class="dot"></span>Deconnexion</button>
+                </form>
             <?php else: ?>
                 <a class="<?= navLinkClass('login', $activeNav); ?>" href="login.php"><span class="dot"></span>Connexion</a>
             <?php endif; ?>

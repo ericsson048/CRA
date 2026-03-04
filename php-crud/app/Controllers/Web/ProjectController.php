@@ -3,9 +3,12 @@ declare(strict_types=1);
 
 namespace App\Controllers\Web;
 
+use App\Core\AppConfig;
+use App\Core\Audit;
 use App\Core\Auth;
 use App\Core\Controller;
 use App\Core\Database;
+use App\Core\NotificationService;
 use App\Models\ProjectModel;
 use App\Models\TeamModel;
 use App\Models\UserModel;
@@ -39,8 +42,10 @@ final class ProjectController extends Controller
         $teamId = '';
         $tlUserId = '';
         $tlaUserId = '';
+        $notificationService = new NotificationService();
 
         if ($this->requestMethod() === 'POST') {
+            $this->validateCsrf();
             $action = trim((string)($_POST['action'] ?? ''));
             if ($action === 'create_project') {
                 $nom = trim((string)($_POST['nom'] ?? ''));
@@ -97,7 +102,7 @@ final class ProjectController extends Controller
                 }
 
                 if (empty($errors)) {
-                    $projectModel->create([
+                    $projectId = $projectModel->create([
                         'nom' => $nom,
                         'description' => $description !== '' ? $description : null,
                         'statut' => $statut,
@@ -108,6 +113,15 @@ final class ProjectController extends Controller
                         'tla_user_id' => $normalizedTlaUserId,
                         'assigned_by' => $sessionUserId,
                     ]);
+                    Audit::log('project_created', 'project', $projectId, ['nom' => $nom]);
+                    $notificationService->notifyMany(
+                        array_filter([$normalizedTlUserId, $normalizedTlaUserId]),
+                        'Nouveau projet',
+                        'Le projet ' . $nom . ' t a ete affecte.',
+                        'projects.php',
+                        'Affectation projet',
+                        '<p>Bonjour,</p><p>Le projet <strong>' . $this->escapeHtml($nom) . '</strong> t a ete affecte.</p><p>Acces: <a href="' . $this->escapeHtml(AppConfig::appUrl() . '/projects.php') . '">' . $this->escapeHtml(AppConfig::appUrl() . '/projects.php') . '</a></p>'
+                    );
                     $this->redirect('projects.php?created=1');
                 }
             }

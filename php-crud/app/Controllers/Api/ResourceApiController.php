@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace App\Controllers\Api;
 
+use App\Core\Audit;
 use App\Core\Auth;
 use App\Core\Controller;
 use App\Core\Database;
@@ -51,6 +52,7 @@ final class ResourceApiController extends Controller
 
         $model = new ResourceModel(Database::connection());
         $id = $model->create($normalized['data']);
+        Audit::log('api_resource_created', 'resource', $id, ['nom' => $normalized['data']['nom']]);
         $this->json($model->findById($id), 201);
     }
 
@@ -69,6 +71,7 @@ final class ResourceApiController extends Controller
         }
 
         $model->update($id, $normalized['data']);
+        Audit::log('api_resource_updated', 'resource', $id, ['nom' => $normalized['data']['nom']]);
         $this->json($model->findById($id));
     }
 
@@ -80,6 +83,7 @@ final class ResourceApiController extends Controller
             $this->json(['message' => 'Ressource introuvable.'], 404);
         }
         $model->delete($id);
+        Audit::log('api_resource_deleted', 'resource', $id);
         $this->json(['message' => 'Ressource supprimee.']);
     }
 

@@ -17,3 +17,6 @@ spl_autoload_register(static function (string $class): void {
         require_once $file;
     }
 });
+
+\App\Core\Env::load(BASE_PATH . '/.env');
+\App\Core\AppConfig::bootstrap();

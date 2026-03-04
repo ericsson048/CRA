@@ -46,6 +46,7 @@ require __DIR__ . '/../layout/app_start.php';
     <div class="card">
         <h3>Nouvelle tache</h3>
         <form method="post" action="planning.php">
+            <?= csrf_field(); ?>
             <input type="hidden" name="action" value="create_task">
             <div class="form-grid">
                 <div class="form-group full">
@@ -143,6 +144,7 @@ require __DIR__ . '/../layout/app_start.php';
                     <td>
                         <?php if ($canUpdateThisTask): ?>
                             <form method="post" class="inline" action="planning.php">
+                                <?= csrf_field(); ?>
                                 <input type="hidden" name="action" value="update_status">
                                 <input type="hidden" name="task_id" value="<?= (int)$task['id']; ?>">
                                 <select name="status" onchange="this.form.submit()">

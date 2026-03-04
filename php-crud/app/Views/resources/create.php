@@ -17,6 +17,7 @@ require __DIR__ . '/../layout/app_start.php';
     <?php endforeach; ?>
 
     <form method="post" action="create.php">
+        <?= csrf_field(); ?>
         <div class="form-grid">
             <div class="form-group full">
                 <label for="nom">Nom</label>

@@ -38,4 +38,47 @@ abstract class Controller
     {
         return strtoupper((string)($_SERVER['REQUEST_METHOD'] ?? 'GET'));
     }
+
+    protected function clientIp(): string
+    {
+        $candidates = [
+            $_SERVER['HTTP_X_FORWARDED_FOR'] ?? null,
+            $_SERVER['HTTP_CLIENT_IP'] ?? null,
+            $_SERVER['REMOTE_ADDR'] ?? null,
+        ];
+
+        foreach ($candidates as $candidate) {
+            if (!is_string($candidate) || trim($candidate) === '') {
+                continue;
+            }
+
+            $value = trim(explode(',', $candidate)[0]);
+            if ($value !== '') {
+                return $value;
+            }
+        }
+
+        return 'unknown';
+    }
+
+    protected function escapeHtml(string $value): string
+    {
+        return htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
+    }
+
+    protected function validateCsrf(): void
+    {
+        $token = (string)($_POST['_csrf_token'] ?? '');
+        if (Csrf::verify($token)) {
+            return;
+        }
+
+        Logger::warning('CSRF validation failed', [
+            'ip' => $this->clientIp(),
+            'path' => (string)($_SERVER['REQUEST_URI'] ?? ''),
+        ]);
+        http_response_code(419);
+        echo 'Session expiree ou requete invalide.';
+        exit;
+    }
 }

@@ -7,11 +7,13 @@ use App\Controllers\Api\AuthApiController;
 use App\Controllers\Api\ResourceApiController;
 use App\Controllers\Api\TaskApiController;
 use App\Controllers\Api\UserApiController;
+use App\Core\AppConfig;
 use App\Core\Auth;
 use App\Core\Database;
 use App\Core\Router;
 
 Auth::start();
+AppConfig::applyHttpSecurityHeaders();
 Database::connection();
 
 $method = strtoupper((string)($_SERVER['REQUEST_METHOD'] ?? 'GET'));

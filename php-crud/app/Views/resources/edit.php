@@ -12,6 +12,7 @@ require __DIR__ . '/../layout/app_start.php';
     <?php endforeach; ?>
 
     <form method="post" action="edit.php?id=<?= (int)$id; ?>">
+        <?= csrf_field(); ?>
         <div class="form-grid">
             <div class="form-group full">
                 <label for="nom">Nom</label>

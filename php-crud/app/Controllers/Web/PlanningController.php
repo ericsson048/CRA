@@ -3,9 +3,12 @@ declare(strict_types=1);
 
 namespace App\Controllers\Web;
 
+use App\Core\AppConfig;
+use App\Core\Audit;
 use App\Core\Auth;
 use App\Core\Controller;
 use App\Core\Database;
+use App\Core\NotificationService;
 use App\Models\ProjectModel;
 use App\Models\ResourceModel;
 use App\Models\TaskModel;
@@ -56,6 +59,7 @@ final class PlanningController extends Controller
         $canUpdateLeadScope = $isLead;
 
         $errors = [];
+        $notificationService = new NotificationService();
 
         $developers = $isLead ? $userModel->developers($sessionTeamId) : $userModel->developers();
         $projects = [];
@@ -66,6 +70,7 @@ final class PlanningController extends Controller
         }
 
         if ($this->requestMethod() === 'POST') {
+            $this->validateCsrf();
             $action = trim((string)($_POST['action'] ?? ''));
 
             if ($action === 'create_task' && $canCreateTasks) {
@@ -112,7 +117,7 @@ final class PlanningController extends Controller
                 }
 
                 if (empty($errors)) {
-                    $taskModel->create([
+                    $taskId = $taskModel->create([
                         'titre' => $title,
                         'description' => $description !== '' ? $description : null,
                         'statut' => 'A faire',
@@ -123,6 +128,15 @@ final class PlanningController extends Controller
                         'assigned_user_id' => $assignedUserId,
                         'created_by' => $sessionUserId > 0 ? $sessionUserId : null,
                     ]);
+                    Audit::log('task_created', 'task', $taskId, ['titre' => $title]);
+                    $notificationService->notifyUser(
+                        $assignedUserId,
+                        'Nouvelle tache',
+                        'Une nouvelle tache t a ete assignee: ' . $title . '.',
+                        'planning.php',
+                        'Nouvelle tache assignee',
+                        '<p>Bonjour,</p><p>Une nouvelle tache t a ete assignee: <strong>' . $this->escapeHtml($title) . '</strong>.</p><p>Acces: <a href="' . $this->escapeHtml(AppConfig::appUrl() . '/planning.php') . '">' . $this->escapeHtml(AppConfig::appUrl() . '/planning.php') . '</a></p>'
+                    );
                     $this->redirect('planning.php?created=1');
                 }
             } elseif ($action === 'update_status') {
@@ -151,6 +165,15 @@ final class PlanningController extends Controller
                             $errors[] = 'Tu ne peux pas modifier cette tache.';
                         } else {
                             $taskModel->updateStatus($taskId, $status);
+                            Audit::log('task_status_updated', 'task', $taskId, ['status' => $status]);
+                            $notificationService->notifyMany(
+                                array_filter([(int)$task['assigned_user_id'], (int)($task['created_by'] ?? 0)]),
+                                'Statut de tache mis a jour',
+                                'La tache ' . (string)$task['titre'] . ' est maintenant au statut ' . $status . '.',
+                                'planning.php',
+                                'Mise a jour de tache',
+                                '<p>Bonjour,</p><p>La tache <strong>' . $this->escapeHtml((string)$task['titre']) . '</strong> est maintenant au statut <strong>' . $this->escapeHtml($status) . '</strong>.</p><p>Acces: <a href="' . $this->escapeHtml(AppConfig::appUrl() . '/planning.php') . '">' . $this->escapeHtml(AppConfig::appUrl() . '/planning.php') . '</a></p>'
+                            );
                             $this->redirect('planning.php?updated=1');
                         }
                     }

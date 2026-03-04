@@ -12,6 +12,7 @@ require __DIR__ . '/../layout/guest_start.php';
         <?php endforeach; ?>
 
         <form method="post" action="login.php">
+            <?= csrf_field(); ?>
             <div class="form-group">
                 <label for="email">Email</label>
                 <input id="email" type="email" name="email" value="<?= h($email); ?>" required>

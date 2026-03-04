@@ -4,16 +4,20 @@ declare(strict_types=1);
 require_once __DIR__ . '/app/bootstrap.php';
 
 use App\Controllers\Web\AuthController;
+use App\Controllers\Web\AccountController;
+use App\Controllers\Web\NotificationController;
 use App\Controllers\Web\PlanningController;
 use App\Controllers\Web\ProjectController;
 use App\Controllers\Web\ResourceController;
 use App\Controllers\Web\TeamController;
 use App\Controllers\Web\UserController;
+use App\Core\AppConfig;
 use App\Core\Auth;
 use App\Core\Database;
 use App\Core\Router;
 
 Auth::start();
+AppConfig::applyHttpSecurityHeaders();
 Database::connection();
 
 $router = new Router();
@@ -52,7 +56,13 @@ $router->add(['GET', 'POST'], 'projects', static function (): void {
 $router->add(['GET', 'POST'], 'login', static function (): void {
     (new AuthController())->login();
 });
-$router->add(['GET'], 'logout', static function (): void {
+$router->add(['GET', 'POST'], 'account', static function (): void {
+    (new AccountController())->index();
+});
+$router->add(['GET', 'POST'], 'notifications', static function (): void {
+    (new NotificationController())->index();
+});
+$router->add(['POST'], 'logout', static function (): void {
     (new AuthController())->logout();
 });
 

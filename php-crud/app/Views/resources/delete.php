@@ -22,6 +22,7 @@ require __DIR__ . '/../layout/app_start.php';
     </div>
 
     <form method="post" action="delete.php?id=<?= (int)$resource['id']; ?>" style="margin-top: 14px;">
+        <?= csrf_field(); ?>
         <input type="hidden" name="action" value="delete">
         <div class="toolbar">
             <button class="btn btn-danger" type="submit">Confirmer la suppression</button>

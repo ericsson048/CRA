@@ -49,6 +49,7 @@ require __DIR__ . '/../layout/app_start.php';
 <div class="card">
     <h3>Creer un projet</h3>
     <form method="post" action="projects.php">
+        <?= csrf_field(); ?>
         <input type="hidden" name="action" value="create_project">
         <div class="form-grid">
             <div class="form-group">

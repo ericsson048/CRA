@@ -26,6 +26,7 @@ require __DIR__ . '/../layout/app_start.php';
 <div class="card">
     <h3>Creer une team</h3>
     <form method="post" action="teams.php">
+        <?= csrf_field(); ?>
         <input type="hidden" name="action" value="create_team">
         <div class="form-grid">
             <div class="form-group">
@@ -71,6 +72,7 @@ require __DIR__ . '/../layout/app_start.php';
     <h3>Affecter un membre</h3>
     <p class="hint">Les roles TL, TLA et developpeur peuvent etre rattaches a une team.</p>
     <form method="post" action="teams.php">
+        <?= csrf_field(); ?>
         <input type="hidden" name="action" value="assign_member">
         <div class="form-grid">
             <div class="form-group">

@@ -1,4 +1,6 @@
 <?php
+use App\Core\Csrf;
+
 if (!function_exists('h')) {
     function h($value): string
     {
@@ -48,5 +50,36 @@ if (!function_exists('roleBadgeClass')) {
             return 'badge badge-neutral';
         }
         return 'badge badge-ok';
+    }
+}
+
+if (!function_exists('csrf_token')) {
+    function csrf_token(): string
+    {
+        return Csrf::token();
+    }
+}
+
+if (!function_exists('csrf_field')) {
+    function csrf_field(): string
+    {
+        return '<input type="hidden" name="_csrf_token" value="' . h(csrf_token()) . '">';
+    }
+}
+
+if (!function_exists('activeBadgeClass')) {
+    function activeBadgeClass(bool $isActive): string
+    {
+        return $isActive ? 'badge badge-ok' : 'badge badge-danger';
+    }
+}
+
+if (!function_exists('notificationBadge')) {
+    function notificationBadge(int $count): string
+    {
+        if ($count <= 0) {
+            return '';
+        }
+        return '<span class="nav-counter">' . h((string)$count) . '</span>';
     }
 }

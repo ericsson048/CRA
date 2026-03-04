@@ -23,7 +23,7 @@ final class UserModel
     public function findByEmail(string $email): ?array
     {
         $stmt = $this->pdo->prepare('
-            SELECT u.id, u.nom, u.email, u.password_hash, u.role, u.team_id, t.nom AS team_name, u.created_at
+            SELECT u.id, u.nom, u.email, u.password_hash, u.role, u.team_id, u.is_active, u.must_change_password, u.last_login_at, u.password_changed_at, t.nom AS team_name, u.created_at
             FROM users u
             LEFT JOIN teams t ON t.id = u.team_id
             WHERE u.email = :email
@@ -40,7 +40,7 @@ final class UserModel
     public function findById(int $id): ?array
     {
         $stmt = $this->pdo->prepare('
-            SELECT u.id, u.nom, u.email, u.role, u.team_id, t.nom AS team_name, u.created_at
+            SELECT u.id, u.nom, u.email, u.role, u.team_id, u.is_active, u.must_change_password, u.last_login_at, u.password_changed_at, t.nom AS team_name, u.created_at
             FROM users u
             LEFT JOIN teams t ON t.id = u.team_id
             WHERE u.id = :id
@@ -57,7 +57,7 @@ final class UserModel
     public function all(): array
     {
         $stmt = $this->pdo->query('
-            SELECT u.id, u.nom, u.email, u.role, u.team_id, t.nom AS team_name, u.created_at
+            SELECT u.id, u.nom, u.email, u.role, u.team_id, u.is_active, u.must_change_password, u.last_login_at, u.password_changed_at, t.nom AS team_name, u.created_at
             FROM users u
             LEFT JOIN teams t ON t.id = u.team_id
             ORDER BY u.id DESC
@@ -66,11 +66,28 @@ final class UserModel
     }
 
     /**
+     * @return array<string, mixed>|null
+     */
+    public function findAuthById(int $id): ?array
+    {
+        $stmt = $this->pdo->prepare('
+            SELECT u.id, u.nom, u.email, u.password_hash, u.role, u.team_id, u.is_active, u.must_change_password, u.last_login_at, u.password_changed_at, t.nom AS team_name, u.created_at
+            FROM users u
+            LEFT JOIN teams t ON t.id = u.team_id
+            WHERE u.id = :id
+            LIMIT 1
+        ');
+        $stmt->execute([':id' => $id]);
+        $item = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $item ?: null;
+    }
+
+    /**
      * @return array<int, array<string, mixed>>
      */
     public function developers(?int $teamId = null): array
     {
-        $sql = "SELECT id, nom, team_id FROM users WHERE role = 'developpeur'";
+        $sql = "SELECT id, nom, team_id FROM users WHERE role = 'developpeur' AND is_active = 1";
         $params = [];
         if ($teamId !== null) {
             $sql .= ' AND team_id = :team_id';
@@ -92,9 +109,10 @@ final class UserModel
     public function leaders(): array
     {
         $stmt = $this->pdo->query("
-            SELECT id, nom, role, team_id
+            SELECT id, nom, role, team_id, is_active
             FROM users
             WHERE role IN ('team_leader', 'team_leader_adjoint')
+              AND is_active = 1
             ORDER BY nom ASC
         ");
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -106,22 +124,23 @@ final class UserModel
     public function managers(): array
     {
         $stmt = $this->pdo->query("
-            SELECT id, nom, role
+            SELECT id, nom, role, is_active
             FROM users
             WHERE role IN ('admin', 'gestionnaire')
+              AND is_active = 1
             ORDER BY nom ASC
         ");
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
     /**
-     * @param array{nom:string, email:string, password_hash:string, role:string, team_id:?int} $data
+     * @param array{nom:string, email:string, password_hash:string, role:string, team_id:?int, is_active?:bool, must_change_password?:bool} $data
      */
     public function create(array $data): int
     {
         $stmt = $this->pdo->prepare('
-            INSERT INTO users (nom, email, password_hash, role, team_id)
-            VALUES (:nom, :email, :password_hash, :role, :team_id)
+            INSERT INTO users (nom, email, password_hash, role, team_id, is_active, must_change_password, password_changed_at)
+            VALUES (:nom, :email, :password_hash, :role, :team_id, :is_active, :must_change_password, NOW())
         ');
         $stmt->execute([
             ':nom' => $data['nom'],
@@ -129,6 +148,8 @@ final class UserModel
             ':password_hash' => $data['password_hash'],
             ':role' => $data['role'],
             ':team_id' => $data['team_id'],
+            ':is_active' => ($data['is_active'] ?? true) ? 1 : 0,
+            ':must_change_password' => ($data['must_change_password'] ?? false) ? 1 : 0,
         ]);
         return (int)$this->pdo->lastInsertId();
     }
@@ -140,6 +161,37 @@ final class UserModel
             ':team_id' => $teamId,
             ':id' => $userId,
         ]);
+    }
+
+    public function setActive(int $userId, bool $isActive): bool
+    {
+        $stmt = $this->pdo->prepare('UPDATE users SET is_active = :is_active WHERE id = :id');
+        return $stmt->execute([
+            ':is_active' => $isActive ? 1 : 0,
+            ':id' => $userId,
+        ]);
+    }
+
+    public function updatePassword(int $userId, string $passwordHash, bool $mustChangePassword): bool
+    {
+        $stmt = $this->pdo->prepare('
+            UPDATE users
+            SET password_hash = :password_hash,
+                must_change_password = :must_change_password,
+                password_changed_at = NOW()
+            WHERE id = :id
+        ');
+        return $stmt->execute([
+            ':password_hash' => $passwordHash,
+            ':must_change_password' => $mustChangePassword ? 1 : 0,
+            ':id' => $userId,
+        ]);
+    }
+
+    public function recordSuccessfulLogin(int $userId): bool
+    {
+        $stmt = $this->pdo->prepare('UPDATE users SET last_login_at = NOW() WHERE id = :id');
+        return $stmt->execute([':id' => $userId]);
     }
 
     public function canCreateRole(string $creatorRole, string $targetRole): bool

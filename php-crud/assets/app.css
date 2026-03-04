@@ -94,6 +94,31 @@ a {
     transition: background-color 0.18s ease, border-color 0.18s ease, color 0.18s ease;
 }
 
+.nav-form {
+    margin: 0;
+}
+
+.nav-form .nav-link {
+    width: 100%;
+    background: transparent;
+    cursor: pointer;
+}
+
+.nav-counter {
+    margin-left: auto;
+    min-width: 22px;
+    height: 22px;
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--accent-rm);
+    color: #101216;
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 0 6px;
+}
+
 .nav-link:hover {
     background: var(--surface2);
     border-color: #2e3444;
